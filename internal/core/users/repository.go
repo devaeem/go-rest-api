@@ -36,8 +36,16 @@ func (r *Repository) FindByID(id uuid.UUID) (*User, error) {
 	return &user, nil
 }
 
-func (r *Repository) Update(user *User) error {
-	return r.db.Save(user).Error
+func (r *Repository) FindByEmail(email string) (*User, error) {
+	var user User
+	if err := r.db.First(&user, "email = ?", email).Error; err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *Repository) Update(user *User, changes map[string]any) error {
+	return r.db.Model(user).Updates(changes).Error
 }
 
 func (r *Repository) Delete(user *User) error {

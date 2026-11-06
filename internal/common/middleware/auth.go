@@ -3,21 +3,20 @@ package middleware
 import (
 	"strings"
 
-	"github.com/devaeem/go-rest-api/internal/common/pkg"
+	"github.com/devaeem/go-rest-api/internal/common/token"
 	"github.com/gofiber/fiber/v3"
 )
 
 const userIDKey = "userID"
 
-// Auth ตรวจ header "Authorization: Bearer <token>" ถ้าผ่านจะเก็บ userID ไว้ให้ handler ใช้
 func Auth(secret string) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		token, ok := strings.CutPrefix(c.Get(fiber.HeaderAuthorization), "Bearer ")
-		if !ok || token == "" {
+		bearer, ok := strings.CutPrefix(c.Get(fiber.HeaderAuthorization), "Bearer ")
+		if !ok || bearer == "" {
 			return fiber.NewError(fiber.StatusUnauthorized, "missing bearer token")
 		}
 
-		userID, err := pkg.ParseToken(token, secret)
+		userID, err := token.Parse(bearer, secret)
 		if err != nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired token")
 		}

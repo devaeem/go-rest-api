@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/devaeem/go-rest-api/internal/common/pkg"
+	"github.com/devaeem/go-rest-api/internal/common/token"
 	"github.com/gofiber/fiber/v3"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -19,8 +19,8 @@ func TestAuth(t *testing.T) {
 		return c.SendString(UserID(c))
 	})
 
-	valid, _ := pkg.GenerateToken("user-123", secret, time.Hour)
-	wrongSecret, _ := pkg.GenerateToken("user-123", "other-secret", time.Hour)
+	valid, _ := token.Generate("user-123", secret, time.Hour)
+	wrongSecret, _ := token.Generate("user-123", "other-secret", time.Hour)
 	expired, _ := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.RegisteredClaims{
 		Subject:   "user-123",
 		ExpiresAt: jwt.NewNumericDate(time.Now().Add(-time.Minute)),
@@ -64,7 +64,7 @@ func TestAuth(t *testing.T) {
 }
 
 func TestEmptySecret(t *testing.T) {
-	if _, err := pkg.GenerateToken("user-123", "", time.Hour); err != pkg.ErrEmptySecret {
+	if _, err := token.Generate("user-123", "", time.Hour); err != token.ErrEmptySecret {
 		t.Errorf("GenerateToken with empty secret: got %v, want ErrEmptySecret", err)
 	}
 }

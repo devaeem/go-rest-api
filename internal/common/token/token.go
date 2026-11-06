@@ -1,4 +1,4 @@
-package pkg
+package token
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 
 var ErrEmptySecret = errors.New("jwt secret is empty")
 
-func GenerateToken(userID, secret string, expiresIn time.Duration) (string, error) {
+func Generate(userID, secret string, expiresIn time.Duration) (string, error) {
 	if secret == "" {
 		return "", ErrEmptySecret
 	}
@@ -23,7 +23,7 @@ func GenerateToken(userID, secret string, expiresIn time.Duration) (string, erro
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(secret))
 }
 
-func ParseToken(tokenString, secret string) (string, error) {
+func Parse(tokenString, secret string) (string, error) {
 	if secret == "" {
 		return "", ErrEmptySecret
 	}
