@@ -39,6 +39,15 @@ func (h *Handler) Login(c fiber.Ctx) error {
 	return response.Success(c, fiber.StatusOK, user)
 }
 
+func (h *Handler) RequireLogin(c fiber.Ctx) error {
+	user, err := h.service.CurrentUser(middleware.UserID(c))
+	if err != nil {
+		return toHTTPError(err)
+	}
+	middleware.SetRole(c, user.Role)
+	return c.Next()
+}
+
 func (h *Handler) Me(c fiber.Ctx) error {
 	user, err := h.service.CurrentUser(middleware.UserID(c))
 	if err != nil {

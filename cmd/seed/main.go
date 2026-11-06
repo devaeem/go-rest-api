@@ -24,12 +24,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := db.AutoMigrate(&users.User{}); err != nil {
+	if err := database.Migrate(db); err != nil {
 		log.Fatal(err)
 	}
 
 	service := users.NewService(users.NewRepository(db))
-	user, err := service.Create(name, email, password)
+	user, err := service.Create(name, email, password, users.RoleAdmin)
 	if errors.Is(err, users.ErrEmailTaken) {
 		log.Printf("user %s already exists, nothing to do", email)
 		return

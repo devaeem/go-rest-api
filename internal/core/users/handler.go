@@ -16,6 +16,7 @@ type CreateUserRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	Role     string `json:"role"`
 }
 
 type UpdateUserRequest struct {
@@ -49,7 +50,14 @@ func (h *Handler) Create(c fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "password must be 8-72 characters")
 	}
 
-	user, err := h.service.Create(req.Name, req.Email, req.Password)
+	if req.Role == "" {
+		req.Role = RoleUser
+	}
+	if req.Role != RoleUser && req.Role != RoleAdmin {
+		return fiber.NewError(fiber.StatusBadRequest, "role must be user or admin")
+	}
+
+	user, err := h.service.Create(req.Name, req.Email, req.Password, req.Role)
 	if err != nil {
 		return toHTTPError(err)
 	}

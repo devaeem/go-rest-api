@@ -6,7 +6,6 @@ import (
 	"github.com/devaeem/go-rest-api/internal/common/config"
 	"github.com/devaeem/go-rest-api/internal/common/database"
 	"github.com/devaeem/go-rest-api/internal/common/response"
-	"github.com/devaeem/go-rest-api/internal/core/users"
 	"github.com/devaeem/go-rest-api/internal/route"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
@@ -15,8 +14,8 @@ import (
 
 func main() {
 	cfg := config.LoadConfig()
-	if cfg.JWTSecret == "" {
-		log.Fatal("JWT_SECRET is not set")
+	if len(cfg.JWTSecret) < 32 {
+		log.Fatal("JWT_SECRET must be at least 32 characters (generate one with: openssl rand -base64 32)")
 	}
 
 	db, err := database.Connect(cfg.DatabaseURL)
@@ -25,7 +24,7 @@ func main() {
 	}
 	log.Println("Connected to database successfully")
 
-	if err := db.AutoMigrate(&users.User{}); err != nil {
+	if err := database.Migrate(db); err != nil {
 		log.Fatal(err)
 	}
 

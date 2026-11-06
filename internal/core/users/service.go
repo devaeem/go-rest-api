@@ -23,7 +23,7 @@ func NewService(repo *Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) Create(name, email, plainPassword string) (*User, error) {
+func (s *Service) Create(name, email, plainPassword, role string) (*User, error) {
 	hash, err := password.Hash(plainPassword)
 	if err != nil {
 		return nil, err
@@ -33,6 +33,7 @@ func (s *Service) Create(name, email, plainPassword string) (*User, error) {
 		Name:     strings.TrimSpace(name),
 		Email:    normalizeEmail(email),
 		Password: hash,
+		Role:     role,
 	}
 	if err := s.repo.Create(user); err != nil {
 		return nil, translateError(err)

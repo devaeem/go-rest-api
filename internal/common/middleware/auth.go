@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"slices"
+
 	"github.com/devaeem/go-rest-api/internal/common/token"
 	"github.com/gofiber/fiber/v3"
 )
@@ -8,6 +10,7 @@ import (
 const (
 	AuthCookieName = "access_token"
 	userIDKey      = "userID"
+	roleKey        = "role"
 )
 
 func Auth(secret string) fiber.Handler {
@@ -27,8 +30,21 @@ func Auth(secret string) fiber.Handler {
 	}
 }
 
-// UserID ดึง userID ที่ Auth เก็บไว้ ใช้ใน handler ที่อยู่หลัง Auth
 func UserID(c fiber.Ctx) string {
 	userID, _ := c.Locals(userIDKey).(string)
 	return userID
+}
+
+func SetRole(c fiber.Ctx, role string) {
+	c.Locals(roleKey, role)
+}
+
+func RequireRole(roles ...string) fiber.Handler {
+	return func(c fiber.Ctx) error {
+		role, _ := c.Locals(roleKey).(string)
+		if slices.Contains(roles, role) {
+			return c.Next()
+		}
+		return fiber.NewError(fiber.StatusForbidden, "you do not have permission to do this")
+	}
 }
