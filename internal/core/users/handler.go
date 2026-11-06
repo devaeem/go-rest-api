@@ -16,13 +16,11 @@ type CreateUserRequest struct {
 	Password string `json:"password"`
 }
 
-// pointer = field ที่ไม่ได้ส่งมาจะเป็น nil และจะไม่ถูกแก้
 type UpdateUserRequest struct {
 	Name  *string `json:"name"`
 	Email *string `json:"email"`
 }
 
-// Handler แปลง HTTP request เป็นการเรียก Service แล้วตอบ JSON กลับ
 type Handler struct {
 	service *Service
 }
