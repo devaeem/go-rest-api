@@ -15,6 +15,8 @@ func main() {
 	db, err := database.Connect(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
+	} else {
+		log.Println("Connected to database successfully")
 	}
 	_ = db // TODO: ส่ง db ให้ repository เมื่อมีฟีเจอร์แรก
 
