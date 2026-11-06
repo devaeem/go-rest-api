@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"io"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -31,21 +32,21 @@ func TestAuth(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		header     string
+		cookie     string
 		wantStatus int
 	}{
-		{"valid token", "Bearer " + valid, fiber.StatusOK},
-		{"no header", "", fiber.StatusUnauthorized},
-		{"no Bearer prefix", valid, fiber.StatusUnauthorized},
-		{"wrong secret", "Bearer " + wrongSecret, fiber.StatusUnauthorized},
-		{"expired", "Bearer " + expired, fiber.StatusUnauthorized},
-		{"alg none", "Bearer " + algNone, fiber.StatusUnauthorized},
+		{"valid token", valid, fiber.StatusOK},
+		{"no cookie", "", fiber.StatusUnauthorized},
+		{"garbage", "not-a-jwt", fiber.StatusUnauthorized},
+		{"wrong secret", wrongSecret, fiber.StatusUnauthorized},
+		{"expired", expired, fiber.StatusUnauthorized},
+		{"alg none", algNone, fiber.StatusUnauthorized},
 	}
 
 	for _, tt := range tests {
 		req := httptest.NewRequest("GET", "/me", nil)
-		if tt.header != "" {
-			req.Header.Set("Authorization", tt.header)
+		if tt.cookie != "" {
+			req.AddCookie(&http.Cookie{Name: AuthCookieName, Value: tt.cookie})
 		}
 		resp, err := app.Test(req)
 		if err != nil {

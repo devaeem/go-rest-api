@@ -4,6 +4,7 @@ import (
 	"github.com/devaeem/go-rest-api/internal/common/config"
 	"github.com/devaeem/go-rest-api/internal/common/middleware"
 	"github.com/devaeem/go-rest-api/internal/common/response"
+	"github.com/devaeem/go-rest-api/internal/core/auth"
 	"github.com/devaeem/go-rest-api/internal/core/users"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
@@ -14,15 +15,18 @@ func Setup(app *fiber.App, db *gorm.DB, cfg *config.Config) {
 		return response.Success(c, fiber.StatusOK, fiber.Map{"message": "Hello, Fiber v3!"})
 	})
 
-	auth := middleware.Auth(cfg.JWTSecret)
-	userHandler := users.NewHandler(users.NewService(users.NewRepository(db)), cfg.JWTSecret, cfg.JWTExpiresIn)
+	requireAuth := middleware.Auth(cfg.JWTSecret)
+	userService := users.NewService(users.NewRepository(db))
+	userHandler := users.NewHandler(userService)
+	authHandler := auth.NewHandler(auth.NewService(userService, cfg), cfg)
 	api := app.Group("/api/v1")
 
 	authRoutes := api.Group("/auth")
-	authRoutes.Post("/register", userHandler.Register)
-	authRoutes.Post("/login", userHandler.Login)
+	authRoutes.Post("/register", authHandler.Register)
+	authRoutes.Post("/login", authHandler.Login)
+	authRoutes.Post("/logout", authHandler.Logout)
 
-	userRoutes := api.Group("/users", auth)
+	userRoutes := api.Group("/users", requireAuth)
 	userRoutes.Get("/", userHandler.List)
 	userRoutes.Get("/:id", userHandler.Get)
 	userRoutes.Patch("/:id", userHandler.Update)

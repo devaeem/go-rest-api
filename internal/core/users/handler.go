@@ -2,90 +2,27 @@ package users
 
 import (
 	"errors"
-	"net/mail"
 	"strings"
-	"time"
 
 	"github.com/devaeem/go-rest-api/internal/common/middleware"
 	"github.com/devaeem/go-rest-api/internal/common/pagination"
 	"github.com/devaeem/go-rest-api/internal/common/response"
-	"github.com/devaeem/go-rest-api/internal/common/token"
+	"github.com/devaeem/go-rest-api/internal/common/validate"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 )
-
-type CreateUserRequest struct {
-	Name     string `json:"name"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
 
 type UpdateUserRequest struct {
 	Name  *string `json:"name"`
 	Email *string `json:"email"`
 }
 
-type LoginResponse struct {
-	Token string `json:"token"`
-	User  *User  `json:"user"`
-}
-
 type Handler struct {
-	service      *Service
-	jwtSecret    string
-	jwtExpiresIn time.Duration
+	service *Service
 }
 
-func NewHandler(service *Service, jwtSecret string, jwtExpiresIn time.Duration) *Handler {
-	return &Handler{service: service, jwtSecret: jwtSecret, jwtExpiresIn: jwtExpiresIn}
-}
-
-func (h *Handler) Register(c fiber.Ctx) error {
-	var req CreateUserRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
-	}
-	req.Name = strings.TrimSpace(req.Name)
-	req.Email = strings.TrimSpace(req.Email)
-
-	if req.Name == "" || req.Email == "" || req.Password == "" {
-		return fiber.NewError(fiber.StatusBadRequest, "name, email and password are required")
-	}
-	if !isValidEmail(req.Email) {
-		return fiber.NewError(fiber.StatusBadRequest, "invalid email")
-	}
-	if len(req.Password) < 8 || len(req.Password) > 72 {
-		return fiber.NewError(fiber.StatusBadRequest, "password must be 8-72 characters")
-	}
-
-	user, err := h.service.Create(req.Name, req.Email, req.Password)
-	if err != nil {
-		return toHTTPError(err)
-	}
-	return response.Success(c, fiber.StatusCreated, user)
-}
-
-func (h *Handler) Login(c fiber.Ctx) error {
-	var req LoginRequest
-	if err := c.Bind().Body(&req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
-	}
-
-	user, err := h.service.Authenticate(req.Email, req.Password)
-	if err != nil {
-		return toHTTPError(err)
-	}
-
-	accessToken, err := token.Generate(user.ID.String(), h.jwtSecret, h.jwtExpiresIn)
-	if err != nil {
-		return err
-	}
-	return response.Success(c, fiber.StatusOK, LoginResponse{Token: accessToken, User: user})
+func NewHandler(service *Service) *Handler {
+	return &Handler{service: service}
 }
 
 func (h *Handler) List(c fiber.Ctx) error {
@@ -122,7 +59,7 @@ func (h *Handler) Update(c fiber.Ctx) error {
 	if req.Name != nil && strings.TrimSpace(*req.Name) == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "name cannot be empty")
 	}
-	if req.Email != nil && !isValidEmail(*req.Email) {
+	if req.Email != nil && !validate.Email(*req.Email) {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid email")
 	}
 
@@ -164,15 +101,8 @@ func parseOwnID(c fiber.Ctx) (uuid.UUID, error) {
 	return id, nil
 }
 
-func isValidEmail(email string) bool {
-	_, err := mail.ParseAddress(email)
-	return err == nil
-}
-
 func toHTTPError(err error) error {
 	switch {
-	case errors.Is(err, ErrInvalidCredentials):
-		return fiber.NewError(fiber.StatusUnauthorized, err.Error())
 	case errors.Is(err, ErrUserNotFound):
 		return fiber.NewError(fiber.StatusNotFound, err.Error())
 	case errors.Is(err, ErrEmailTaken):

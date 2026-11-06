@@ -1,22 +1,23 @@
 package middleware
 
 import (
-	"strings"
-
 	"github.com/devaeem/go-rest-api/internal/common/token"
 	"github.com/gofiber/fiber/v3"
 )
 
-const userIDKey = "userID"
+const (
+	AuthCookieName = "access_token"
+	userIDKey      = "userID"
+)
 
 func Auth(secret string) fiber.Handler {
 	return func(c fiber.Ctx) error {
-		bearer, ok := strings.CutPrefix(c.Get(fiber.HeaderAuthorization), "Bearer ")
-		if !ok || bearer == "" {
-			return fiber.NewError(fiber.StatusUnauthorized, "missing bearer token")
+		accessToken := c.Cookies(AuthCookieName)
+		if accessToken == "" {
+			return fiber.NewError(fiber.StatusUnauthorized, "not logged in")
 		}
 
-		userID, err := token.Parse(bearer, secret)
+		userID, err := token.Parse(accessToken, secret)
 		if err != nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired token")
 		}

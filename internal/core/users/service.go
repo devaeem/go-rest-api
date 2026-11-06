@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	ErrUserNotFound       = errors.New("user not found")
-	ErrEmailTaken         = errors.New("email already in use")
-	ErrInvalidCredentials = errors.New("invalid email or password")
+	ErrUserNotFound = errors.New("user not found")
+	ErrEmailTaken   = errors.New("email already in use")
 )
 
 type Service struct {
@@ -80,17 +79,10 @@ func (s *Service) Update(id uuid.UUID, name, email *string) (*User, error) {
 	return s.Get(id)
 }
 
-func (s *Service) Authenticate(email, plainPassword string) (*User, error) {
+func (s *Service) GetByEmail(email string) (*User, error) {
 	user, err := s.repo.FindByEmail(normalizeEmail(email))
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrInvalidCredentials
-		}
-		return nil, err
-	}
-
-	if !password.Check(user.Password, plainPassword) {
-		return nil, ErrInvalidCredentials
+		return nil, translateError(err)
 	}
 	return user, nil
 }

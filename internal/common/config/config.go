@@ -15,6 +15,7 @@ type Config struct {
 	DatabaseURL        string
 	JWTSecret          string
 	JWTExpiresIn       time.Duration
+	CookieSecure       bool
 }
 
 func LoadConfig() *Config {
@@ -23,10 +24,11 @@ func LoadConfig() *Config {
 	return &Config{
 		Port: getEnv("PORT", "8080"),
 
-		CORSAllowedOrigins: strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "*"), ","),
+		CORSAllowedOrigins: strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000"), ","),
 		DatabaseURL:        os.Getenv("DATABASE_URL"),
 		JWTSecret:          os.Getenv("JWT_SECRET"),
 		JWTExpiresIn:       getDuration("JWT_EXPIRES_IN", 24*time.Hour),
+		CookieSecure:       getEnv("COOKIE_SECURE", "true") == "true",
 	}
 }
 
