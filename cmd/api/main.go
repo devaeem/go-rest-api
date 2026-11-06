@@ -4,12 +4,20 @@ import (
 	"log"
 
 	"github.com/devaeem/go-rest-api/internal/common/config"
+	"github.com/devaeem/go-rest-api/internal/common/database"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 )
 
 func main() {
 	cfg := config.LoadConfig()
+
+	db, err := database.Connect(cfg.DatabaseURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_ = db // TODO: ส่ง db ให้ repository เมื่อมีฟีเจอร์แรก
+
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{

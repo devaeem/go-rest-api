@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Port               string
 	CORSAllowedOrigins []string
+	DatabaseURL        string
 }
 
 func LoadConfig() *Config {
@@ -19,6 +20,7 @@ func LoadConfig() *Config {
 		Port: getEnv("PORT", "8080"),
 
 		CORSAllowedOrigins: strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "*"), ","),
+		DatabaseURL:        os.Getenv("DATABASE_URL"),
 	}
 }
 
