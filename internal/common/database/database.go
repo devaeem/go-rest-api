@@ -15,7 +15,8 @@ func Connect(url string) (*gorm.DB, error) {
 		return nil, errors.New("DATABASE_URL is not set")
 	}
 
-	db, err := gorm.Open(postgres.Open(url), &gorm.Config{})
+	// TranslateError ทำให้ได้ gorm.ErrDuplicatedKey แทน error ดิบของ postgres
+	db, err := gorm.Open(postgres.Open(url), &gorm.Config{TranslateError: true})
 	if err != nil {
 		return nil, fmt.Errorf("connect database: %w", err)
 	}
