@@ -7,9 +7,13 @@ import (
 	"github.com/devaeem/go-rest-api/internal/common/password"
 	"github.com/devaeem/go-rest-api/internal/common/token"
 	"github.com/devaeem/go-rest-api/internal/core/users"
+	"github.com/google/uuid"
 )
 
-var ErrInvalidCredentials = errors.New("invalid email or password")
+var (
+	ErrInvalidCredentials = errors.New("invalid email or password")
+	ErrNotLoggedIn        = errors.New("not logged in")
+)
 
 type Service struct {
 	users *users.Service
@@ -18,10 +22,6 @@ type Service struct {
 
 func NewService(users *users.Service, cfg *config.Config) *Service {
 	return &Service{users: users, cfg: cfg}
-}
-
-func (s *Service) Register(name, email, plainPassword string) (*users.User, error) {
-	return s.users.Create(name, email, plainPassword)
 }
 
 func (s *Service) Login(email, plainPassword string) (*users.User, string, error) {
@@ -42,4 +42,17 @@ func (s *Service) Login(email, plainPassword string) (*users.User, string, error
 		return nil, "", err
 	}
 	return user, accessToken, nil
+}
+
+func (s *Service) CurrentUser(userID string) (*users.User, error) {
+	id, err := uuid.Parse(userID)
+	if err != nil {
+		return nil, ErrNotLoggedIn
+	}
+
+	user, err := s.users.Get(id)
+	if errors.Is(err, users.ErrUserNotFound) {
+		return nil, ErrNotLoggedIn
+	}
+	return user, err
 }

@@ -12,6 +12,12 @@ import (
 	"github.com/google/uuid"
 )
 
+type CreateUserRequest struct {
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type UpdateUserRequest struct {
 	Name  *string `json:"name"`
 	Email *string `json:"email"`
@@ -23,6 +29,31 @@ type Handler struct {
 
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
+}
+
+func (h *Handler) Create(c fiber.Ctx) error {
+	var req CreateUserRequest
+	if err := c.Bind().Body(&req); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+	req.Name = strings.TrimSpace(req.Name)
+	req.Email = strings.TrimSpace(req.Email)
+
+	if req.Name == "" || req.Email == "" || req.Password == "" {
+		return fiber.NewError(fiber.StatusBadRequest, "name, email and password are required")
+	}
+	if !validate.Email(req.Email) {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid email")
+	}
+	if len(req.Password) < 8 || len(req.Password) > 72 {
+		return fiber.NewError(fiber.StatusBadRequest, "password must be 8-72 characters")
+	}
+
+	user, err := h.service.Create(req.Name, req.Email, req.Password)
+	if err != nil {
+		return toHTTPError(err)
+	}
+	return response.Success(c, fiber.StatusCreated, user)
 }
 
 func (h *Handler) List(c fiber.Ctx) error {

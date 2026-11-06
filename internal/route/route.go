@@ -22,11 +22,12 @@ func Setup(app *fiber.App, db *gorm.DB, cfg *config.Config) {
 	api := app.Group("/api/v1")
 
 	authRoutes := api.Group("/auth")
-	authRoutes.Post("/register", authHandler.Register)
 	authRoutes.Post("/login", authHandler.Login)
 	authRoutes.Post("/logout", authHandler.Logout)
+	authRoutes.Get("/me", requireAuth, authHandler.Me)
 
 	userRoutes := api.Group("/users", requireAuth)
+	userRoutes.Post("/", userHandler.Create)
 	userRoutes.Get("/", userHandler.List)
 	userRoutes.Get("/:id", userHandler.Get)
 	userRoutes.Patch("/:id", userHandler.Update)
